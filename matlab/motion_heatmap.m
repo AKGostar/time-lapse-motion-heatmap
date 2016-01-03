@@ -8,6 +8,8 @@ color_intensity_factor = 7;
 % Set to true to construct an "average" image used for the final overlay
 % image. Otherwise, the first frame of the sequence will be used
 use_average_image_overlay = 1;
+% Sigma parameter for the Gaussian low-pass filter applied to the heatmap
+sigma = 1.5;
 
 fprintf('Loading images and initializing\n');
 frame_files = dir('*.jpg');
@@ -65,9 +67,9 @@ for block_index = 1:num_blocks
     block_col = block_index - num_horizontal_divisions * (block_row - 1);
     heatmap(block_row, block_col) = std(intensities(block_index, :));
 end
-heatmap_filt = imgaussfilt(heatmap, 1.5);
+heatmap_filt = imgaussfilt(heatmap, sigma);
 figure, mesh(heatmap_filt);
-title(sprintf('Time-averaged spatial concentration of motion; Gaussian-filtered (\\sigma = 1.5, N = %i)', num_frames));
+title(sprintf('Time-averaged spatial concentration of motion; Gaussian-filtered (\\sigma = %i, N = %i)', sigma, num_frames));
 xlabel('Horizontal block index');
 ylabel('Vertical block index');
 zlabel('Standard deviation of grayscale intensity');
