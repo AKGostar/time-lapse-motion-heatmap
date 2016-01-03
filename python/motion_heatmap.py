@@ -37,16 +37,31 @@ class MotionHeatmap:
         sigma=1.5,
         # Scales intensity of the heatmap's red/blue tint: higher values will exaggerate the tinting
         color_intensity_factor=7,
+        # Suppress debug print statements as you see fit
+        print_debug=True,
     ):
         self.num_vertical_divisions = num_vertical_divisions
         self.num_horizontal_divisions = num_horizontal_divisions
         self.color_intensity_factor = color_intensity_factor
         self.use_average_image_overlay = use_average_image_overlay
         self.images = images
+        self.print_debug = print_debug
 
         sample_image = cv2.imread(self.images[0])
         self.height = len(sample_image)
         self.width = len(sample_image[0])
+
+        # Overlay image will look blocky if the number of divisions isn't equally divisible by the image dimensions.
+        if self.height % self.num_vertical_divisions != 0:
+            print 'Warning: number of vertical divisions {divisions} isn\'t equally divisible by the image height {height}; this will result in a blocky output image.'.format(
+                divisions=self.num_vertical_divisions,
+                height=self.height,
+            )
+        if self.width % self.num_horizontal_divisions != 0:
+            print 'Warning: number of horizontal divisions {divisions} isn\'t equally divisible by the image width {width}; this will result in a blocky output image.'.format(
+                divisions=self.num_horizontal_divisions,
+                width=self.width,
+            )
 
         # Initialize random pixel locations for each block
         self.pixel_locations = {}
@@ -60,7 +75,8 @@ class MotionHeatmap:
         self.block_intensities = collections.defaultdict(list)
         self.average_image = np.zeros((self.height, self.width, 3))
         for index, file_name in enumerate(self.images):
-            print 'Processing input frame {index} of {total}'.format(index=index + 1, total=len(self.images))
+            if self.print_debug:
+                print 'Processing input frame {index} of {total}'.format(index=index + 1, total=len(self.images))
             frame = cv2.imread(file_name, cv2.IMREAD_COLOR)
             if self.use_average_image_overlay:
                 self.average_image += frame
@@ -87,10 +103,11 @@ class MotionHeatmap:
         mean_stdev = np.mean(self.heatmap)
 
         for vertical_index, horizontal_index in itertools.product(range(self.num_vertical_divisions), range(self.num_horizontal_divisions)):
-            print 'Processing output block {index} of {total}'.format(
-                index=vertical_index * self.num_horizontal_divisions + horizontal_index + 1,
-                total=self.num_horizontal_divisions * self.num_vertical_divisions,
-            )
+            if self.print_debug:
+                print 'Processing output block {index} of {total}'.format(
+                    index=vertical_index * self.num_horizontal_divisions + horizontal_index + 1,
+                    total=self.num_horizontal_divisions * self.num_vertical_divisions,
+                )
             offset = self.color_intensity_factor * (self.heatmap[vertical_index][horizontal_index] - mean_stdev)
             for i, j in itertools.product(range(self.height/self.num_vertical_divisions), range(self.width/self.num_horizontal_divisions)):
                 row = vertical_index * self.height/self.num_vertical_divisions + i
