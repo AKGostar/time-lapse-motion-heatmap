@@ -52,6 +52,10 @@ for frame_index = 1:num_frames
         intensities(block_index, frame_index) = image(pixel(1), pixel(2));
     end
 end
+[b, a] = butter(5, 0.2, 'high');
+for block_index = 1:num_blocks
+    intensities(block_index, :) = filtfilt(b, a, intensities(block_index, :));
+end
 if (use_average_image_overlay)
     average_image(:, :, 1) = average_image_red;
     average_image(:, :, 2) = average_image_green;

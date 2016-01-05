@@ -4,6 +4,7 @@ import math
 import random
 import cv2
 import scipy.ndimage
+import scipy.signal
 import numpy as np
 
 
@@ -83,6 +84,9 @@ class MotionHeatmap:
             for row, col in itertools.product(range(self.num_vertical_divisions), range(self.num_horizontal_divisions)):
                 pixel_row, pixel_col = self.pixel_locations[(row, col)]
                 self.block_intensities[(row, col)].append(round(np.mean(frame[pixel_row][pixel_col])))
+        b, a = scipy.signal.butter(5, 0.2, 'high')
+        for block, intensity in self.block_intensities.items():
+            self.block_intensities[block] = scipy.signal.filtfilt(b, a, intensity)
         if self.use_average_image_overlay:
             self.average_image /= len(self.images)
 
